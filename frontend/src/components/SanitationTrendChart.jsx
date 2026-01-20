@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { apiService } from '../services/api';
 
 /**
  * SanitationTrendChart Component
- * Shows sanitation complaints over time
+ * Shows sanitation complaints by area
  */
 function SanitationTrendChart() {
   const [chartData, setChartData] = useState([]);
@@ -20,17 +20,14 @@ function SanitationTrendChart() {
       setLoading(true);
       const response = await apiService.getSanitationComplaints();
       
-      // Group complaints by date
-      const dataByDate = {};
+      // Group complaints by area
+      const dataByArea = {};
       response.data.forEach(complaint => {
-        const date = new Date(complaint.reportedDate).toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric' 
-        });
+        const area = complaint.area || 'Unknown';
         
-        if (!dataByDate[date]) {
-          dataByDate[date] = {
-            date,
+        if (!dataByArea[area]) {
+          dataByArea[area] = {
+            area,
             count: 0,
             open: 0,
             inProgress: 0,
@@ -38,17 +35,15 @@ function SanitationTrendChart() {
           };
         }
         
-        dataByDate[date].count++;
+        dataByArea[area].count++;
         
-        if (complaint.status === 'open') dataByDate[date].open++;
-        else if (complaint.status === 'in-progress') dataByDate[date].inProgress++;
-        else if (complaint.status === 'resolved') dataByDate[date].resolved++;
+        if (complaint.status === 'open') dataByArea[area].open++;
+        else if (complaint.status === 'in-progress') dataByArea[area].inProgress++;
+        else if (complaint.status === 'resolved') dataByArea[area].resolved++;
       });
 
-      // Convert to array and sort by date
-      const chartArray = Object.values(dataByDate).sort((a, b) => {
-        return new Date(a.date) - new Date(b.date);
-      });
+      // Convert to array
+      const chartArray = Object.values(dataByArea);
 
       setChartData(chartArray);
       setError(null);
@@ -81,41 +76,35 @@ function SanitationTrendChart() {
   return (
     <div className="card">
       <h3 className="text-lg font-semibold text-gray-800 mb-4">
-        Sanitation Complaints Trend
+        Sanitation Complaints by Area
       </h3>
       
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData}>
+        <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis 
-            dataKey="date" 
+            dataKey="area" 
             tick={{ fontSize: 12 }}
           />
           <YAxis tick={{ fontSize: 12 }} />
           <Tooltip />
           <Legend />
-          <Line 
-            type="monotone" 
+          <Bar 
             dataKey="open" 
-            stroke="#ef4444" 
+            fill="#ef4444" 
             name="Open"
-            strokeWidth={2}
           />
-          <Line 
-            type="monotone" 
+          <Bar 
             dataKey="inProgress" 
-            stroke="#f97316" 
+            fill="#f97316" 
             name="In Progress"
-            strokeWidth={2}
           />
-          <Line 
-            type="monotone" 
+          <Bar 
             dataKey="resolved" 
-            stroke="#22c55e" 
+            fill="#22c55e" 
             name="Resolved"
-            strokeWidth={2}
           />
-        </LineChart>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { apiService } from '../services/api';
 
 /**
  * AirQualityTrendChart Component
- * Shows PM2.5 levels over time
+ * Shows PM2.5 levels by area
  */
 function AirQualityTrendChart() {
   const [chartData, setChartData] = useState([]);
@@ -20,20 +20,29 @@ function AirQualityTrendChart() {
       setLoading(true);
       const response = await apiService.getEnvironmentalData();
       
-      // Filter only air quality data and format for chart
-      const airData = response.data
+      // Group by area and calculate averages
+      const areaMap = {};
+      
+      response.data
         .filter(item => item.type === 'air')
-        .map(item => ({
-          date: new Date(item.recordedDate).toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric' 
-          }),
-          area: item.area,
-          pm25: item.pm25,
-          pm10: item.pm10,
-          timestamp: new Date(item.recordedDate).getTime()
-        }))
-        .sort((a, b) => a.timestamp - b.timestamp);
+        .forEach(item => {
+          if (!areaMap[item.area]) {
+            areaMap[item.area] = {
+              totalPm25: 0,
+              totalPm10: 0,
+              count: 0
+            };
+          }
+          areaMap[item.area].totalPm25 += (item.pm25 || 0);
+          areaMap[item.area].totalPm10 += (item.pm10 || 0);
+          areaMap[item.area].count++;
+        });
+
+      const airData = Object.keys(areaMap).map(area => ({
+        area,
+        pm25: parseFloat((areaMap[area].totalPm25 / areaMap[area].count).toFixed(1)),
+        pm10: parseFloat((areaMap[area].totalPm10 / areaMap[area].count).toFixed(1))
+      }));
 
       setChartData(airData);
       setError(null);
@@ -66,14 +75,14 @@ function AirQualityTrendChart() {
   return (
     <div className="card">
       <h3 className="text-lg font-semibold text-gray-800 mb-4">
-        Air Quality Trend (PM2.5 & PM10)
+        Air Quality by Area (Avg PM2.5 & PM10)
       </h3>
       
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData}>
+        <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis 
-            dataKey="date" 
+            dataKey="area" 
             tick={{ fontSize: 12 }}
           />
           <YAxis 
@@ -82,21 +91,17 @@ function AirQualityTrendChart() {
           />
           <Tooltip />
           <Legend />
-          <Line 
-            type="monotone" 
+          <Bar 
             dataKey="pm25" 
-            stroke="#8b5cf6" 
+            fill="#8b5cf6" 
             name="PM2.5"
-            strokeWidth={2}
           />
-          <Line 
-            type="monotone" 
+          <Bar 
             dataKey="pm10" 
-            stroke="#3b82f6" 
+            fill="#3b82f6" 
             name="PM10"
-            strokeWidth={2}
           />
-        </LineChart>
+        </BarChart>
       </ResponsiveContainer>
 
       <div className="mt-4 p-3 bg-gray-50 rounded-lg">

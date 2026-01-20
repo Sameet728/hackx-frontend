@@ -7,6 +7,7 @@ import healthIncidentRoutes from './routes/healthIncidents.js';
 import sanitationComplaintRoutes from './routes/sanitationComplaints.js';
 import environmentalDataRoutes from './routes/environmentalData.js';
 import areaSummaryRoutes from './routes/areaSummary.js';
+import outbreakRoutes from './routes/outbreak.js';
 
 // Load environment variables
 dotenv.config();
@@ -15,7 +16,7 @@ dotenv.config();
 const app = express();
 
 // Connect to MongoDB
-connectDB();
+await connectDB();
 
 // Middleware
 app.use(cors({
@@ -31,6 +32,7 @@ app.use('/api/health-incidents', healthIncidentRoutes);
 app.use('/api/sanitation-complaints', sanitationComplaintRoutes);
 app.use('/api/environmental-data', environmentalDataRoutes);
 app.use('/api/area-summary', areaSummaryRoutes);
+app.use('/api', outbreakRoutes); // Mounts /api/outbreak-risk
 
 // Root endpoint
 app.get('/', (req, res) => {

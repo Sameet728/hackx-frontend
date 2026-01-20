@@ -80,6 +80,12 @@ export const apiService = {
     const response = await api.get('/environmental-data', { params });
     return response.data;
   },
+
+  // Outbreak Risk Prediction
+  getOutbreakRisk: async (area) => {
+    const response = await api.get('/outbreak-risk', { params: { area } });
+    return response.data;
+  },
 };
 
 export default api;

@@ -31,6 +31,45 @@ function InsightsPanel() {
 
       const generatedInsights = [];
 
+      // ML Insight: AI Outbreak Predictions
+      // Fetch predictions for unique areas (limit to 5 to manage load)
+      const uniqueAreas = [...new Set(areaSummary.map(a => a.area))].slice(0, 5);
+      
+      // Create a specific Insight for ML predictions
+      try {
+        const mlPromises = uniqueAreas.map(area => apiService.getOutbreakRisk(area));
+        const mlResults = await Promise.allSettled(mlPromises);
+        
+        mlResults.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            const pred = result.value;
+            const probPercent = (pred.outbreakProbability * 100).toFixed(1);
+            const drivers = pred.topDrivers && pred.topDrivers.length > 0 
+              ? pred.topDrivers.join(', ') 
+              : 'Multiple factors';
+
+            if (pred.riskLevel === 'HIGH') {
+              generatedInsights.push({
+                type: 'critical',
+                title: `🤖 AI ALERT: High Outbreak Risk in ${pred.area}`,
+                description: `Model Confidence: ${probPercent}%. Key Drivers: ${drivers}`,
+                action: 'Deploy preventive health inputs immediately'
+              });
+            } else if (pred.riskLevel === 'MODERATE') {
+              generatedInsights.push({
+                type: 'warning',
+                title: `🤖 AI ALERT: Moderate Risk in ${pred.area}`,
+                description: `Model Confidence: ${probPercent}%. Key Drivers: ${drivers}`,
+                action: 'Increase vector control measures'
+              });
+            }
+          }
+        });
+      } catch (mlErr) {
+        console.error('ML Prediction Error:', mlErr);
+        // Continue without ML insights if this fails
+      }
+
       // Insight 1: High-risk areas
       const highRiskAreas = areaSummary.filter(area => area.riskLevel === 'HIGH');
       if (highRiskAreas.length > 0) {
