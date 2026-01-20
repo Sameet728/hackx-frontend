@@ -1,0 +1,20 @@
+{
+  "model_type": "ensemble_voting_gbm",
+  "feature_names": [
+    "health_incidents_last_7d",
+    "health_incidents_last_14d",
+    "dengue_incidents_last_7d",
+    "malaria_incidents_last_7d",
+    "open_sanitation_complaints",
+    "total_sanitation_complaints_last_7d",
+    "avg_pm25_last_7d",
+    "avg_pm10_last_7d",
+    "max_pm25_last_7d"
+  ],
+  "metrics": {
+    "train_roc_auc": 0.9977142857142858,
+    "test_roc_auc": 0.8947990543735225,
+    "test_accuracy": 0.9727891156462585
+  },
+  "timestamp": "2026-01-20T18:20:05.990038"
+}

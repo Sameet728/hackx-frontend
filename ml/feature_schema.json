@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0",
+  "description": "Feature schema for outbreak prediction model - documents all input features for explainability and backend integration",
+  "outbreak_threshold": 5,
+  "prediction_window": "7 days",
+  "model_type": "logistic_regression",
+  "features": [
+    {
+      "name": "health_incidents_last_7d",
+      "description": "Count of all health incidents reported in the area in the last 7 days",
+      "data_type": "integer",
+      "min_value": 0,
+      "typical_range": "0-20",
+      "importance": "High - Direct indicator of recent disease activity",
+      "engineering_logic": "Rolling 7-day count of all health incidents (Dengue, Malaria, Covid, Cholera, Other)"
+    },
+    {
+      "name": "health_incidents_last_14d",
+      "description": "Count of all health incidents reported in the area in the last 14 days",
+      "data_type": "integer",
+      "min_value": 0,
+      "typical_range": "0-40",
+      "importance": "High - Broader temporal context of disease trends",
+      "engineering_logic": "Rolling 14-day count to capture medium-term trends"
+    },
+    {
+      "name": "dengue_incidents_last_7d",
+      "description": "Count of Dengue-specific incidents in the last 7 days",
+      "data_type": "integer",
+      "min_value": 0,
+      "typical_range": "0-10",
+      "importance": "Medium - Disease-specific early warning signal",
+      "engineering_logic": "Filter health incidents where diseaseType = 'Dengue', count last 7 days"
+    },
+    {
+      "name": "malaria_incidents_last_7d",
+      "description": "Count of Malaria-specific incidents in the last 7 days",
+      "data_type": "integer",
+      "min_value": 0,
+      "typical_range": "0-10",
+      "importance": "Medium - Disease-specific early warning signal",
+      "engineering_logic": "Filter health incidents where diseaseType = 'Malaria', count last 7 days"
+    },
+    {
+      "name": "open_sanitation_complaints",
+      "description": "Count of currently open (unresolved) sanitation complaints in the area",
+      "data_type": "integer",
+      "min_value": 0,
+      "typical_range": "0-30",
+      "importance": "High - Sanitation issues correlate with disease spread",
+      "engineering_logic": "Count complaints with status = 'open' up to current date"
+    },
+    {
+      "name": "total_sanitation_complaints_last_7d",
+      "description": "Total sanitation complaints (all statuses) in the last 7 days",
+      "data_type": "integer",
+      "min_value": 0,
+      "typical_range": "0-20",
+      "importance": "Medium - Indicates recent sanitation deterioration",
+      "engineering_logic": "Rolling 7-day count of all sanitation complaints (Garbage, Drainage, Water Logging, Toilet)"
+    },
+    {
+      "name": "avg_pm25_last_7d",
+      "description": "Average PM2.5 air quality index in the last 7 days",
+      "data_type": "float",
+      "min_value": 0,
+      "typical_range": "50-300",
+      "units": "µg/m³",
+      "importance": "Medium - Poor air quality weakens immunity",
+      "engineering_logic": "Mean of pm25 values from environmental_data where type = 'air', last 7 days"
+    },
+    {
+      "name": "avg_pm10_last_7d",
+      "description": "Average PM10 air quality index in the last 7 days",
+      "data_type": "float",
+      "min_value": 0,
+      "typical_range": "100-400",
+      "units": "µg/m³",
+      "importance": "Low - Secondary air quality indicator",
+      "engineering_logic": "Mean of pm10 values from environmental_data where type = 'air', last 7 days"
+    },
+    {
+      "name": "max_pm25_last_7d",
+      "description": "Maximum PM2.5 spike recorded in the last 7 days",
+      "data_type": "float",
+      "min_value": 0,
+      "typical_range": "100-400",
+      "units": "µg/m³",
+      "importance": "Medium - Captures severe air quality events",
+      "engineering_logic": "Maximum pm25 value in last 7 days (detects pollution spikes)"
+    }
+  ],
+  "target_variable": {
+    "name": "outbreak",
+    "description": "Binary indicator of disease outbreak in the next 7 days",
+    "data_type": "binary",
+    "values": {
+      "0": "No outbreak (≤5 health incidents in next 7 days)",
+      "1": "Outbreak detected (>5 health incidents in next 7 days)"
+    },
+    "engineering_logic": "Count health incidents in future 7-day window, outbreak = 1 if count > 5, else 0"
+  },
+  "model_output": {
+    "prediction_type": "probability",
+    "output_range": "0.0 to 1.0",
+    "interpretation": {
+      "0.0-0.3": "Low Risk - Routine surveillance",
+      "0.3-0.7": "Medium Risk - Enhanced monitoring recommended",
+      "0.7-1.0": "High Risk - Immediate intervention required"
+    }
+  },
+  "usage_notes": {
+    "preprocessing": "All features must be standardized using the saved scaler.pkl before prediction",
+    "missing_values": "Fill missing values with 0 (indicates no data/activity)",
+    "feature_order": "Features must be provided in the exact order listed above",
+    "real_time_prediction": "For real-time predictions, compute features using the most recent data up to the current date"
+  },
+  "integration_example": {
+    "description": "Example API payload for outbreak prediction",
+    "payload": {
+      "area": "Pimpri",
+      "features": {
+        "health_incidents_last_7d": 3,
+        "health_incidents_last_14d": 8,
+        "dengue_incidents_last_7d": 2,
+        "malaria_incidents_last_7d": 1,
+        "open_sanitation_complaints": 12,
+        "total_sanitation_complaints_last_7d": 5,
+        "avg_pm25_last_7d": 165.0,
+        "avg_pm10_last_7d": 220.0,
+        "max_pm25_last_7d": 180.0
+      }
+    },
+    "expected_response": {
+      "area": "Pimpri",
+      "outbreak_probability": 0.68,
+      "risk_level": "Medium Risk",
+      "recommendation": "Enhanced monitoring advised"
+    }
+  }
+}
