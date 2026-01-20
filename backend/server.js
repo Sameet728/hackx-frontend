@@ -17,6 +17,9 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Connect to MongoDB
 await connectDB();
 
@@ -32,8 +35,7 @@ app.use(cors({
 
 // IMPORTANT: handle preflight
 app.options("*", cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
 
 // Routes
 app.use('/api/auth', authRoutes);
