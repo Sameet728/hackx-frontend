@@ -118,7 +118,7 @@ function Dashboard() {
       {/* Info Section */}
       <div className="card bg-blue-50 border border-blue-200">
         <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          📋 Phase 1 Complete
+          📋 Phase 1-4 Complete
         </h2>
         <ul className="space-y-2 text-gray-700">
           <li className="flex items-start">
@@ -135,12 +135,16 @@ function Dashboard() {
           </li>
           <li className="flex items-start">
             <span className="text-green-600 mr-2">✓</span>
-            Frontend-Backend API integration
+            REST APIs with area-wise risk assessment
+          </li>
+          <li className="flex items-start">
+            <span className="text-green-600 mr-2">✓</span>
+            Interactive Leaflet map with risk visualization
           </li>
         </ul>
         <div className="mt-4 pt-4 border-t border-blue-300">
           <p className="text-sm text-gray-600">
-            <strong>Next Steps (Phase 2):</strong> Implement CRUD operations, add charts, integrate maps
+            Click <strong>Map View</strong> in the navigation to see the interactive risk map.
           </p>
         </div>
       </div>

@@ -52,7 +52,8 @@ export const getAreaSummary = async (req, res) => {
           area: incident.area,
           healthIncidentCount: 0,
           sanitationComplaintCount: 0,
-          pm25Values: []
+          pm25Values: [],
+          location: incident.location // Store location from first occurrence
         });
       }
       areaMap.get(incident.area).healthIncidentCount++;
@@ -65,7 +66,8 @@ export const getAreaSummary = async (req, res) => {
           area: complaint.area,
           healthIncidentCount: 0,
           sanitationComplaintCount: 0,
-          pm25Values: []
+          pm25Values: [],
+          location: complaint.location // Store location from first occurrence
         });
       }
       areaMap.get(complaint.area).sanitationComplaintCount++;
@@ -78,7 +80,8 @@ export const getAreaSummary = async (req, res) => {
           area: data.area,
           healthIncidentCount: 0,
           sanitationComplaintCount: 0,
-          pm25Values: []
+          pm25Values: [],
+          location: data.location // Store location from first occurrence
         });
       }
       if (data.pm25 !== undefined && data.pm25 !== null) {
@@ -101,6 +104,7 @@ export const getAreaSummary = async (req, res) => {
 
       return {
         area: area.area,
+        location: area.location, // Include location for map plotting
         healthIncidentCount: area.healthIncidentCount,
         sanitationComplaintCount: area.sanitationComplaintCount,
         avgPM25: avgPM25 !== null ? parseFloat(avgPM25.toFixed(2)) : null,

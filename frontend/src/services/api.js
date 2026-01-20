@@ -57,23 +57,29 @@ export const apiService = {
     return response.data;
   },
 
-  // Health Incidents (to be implemented in Phase 2)
-  // getHealthIncidents: async (params) => {
-  //   const response = await api.get('/health-incidents', { params });
-  //   return response.data;
-  // },
+  // Area Summary
+  getAreaSummary: async () => {
+    const response = await api.get('/area-summary');
+    return response.data;
+  },
 
-  // Sanitation Complaints (to be implemented in Phase 2)
-  // getSanitationComplaints: async (params) => {
-  //   const response = await api.get('/sanitation-complaints', { params });
-  //   return response.data;
-  // },
+  // Health Incidents
+  getHealthIncidents: async (params) => {
+    const response = await api.get('/health-incidents', { params });
+    return response.data;
+  },
 
-  // Environmental Data (to be implemented in Phase 2)
-  // getEnvironmentalData: async (params) => {
-  //   const response = await api.get('/environmental-data', { params });
-  //   return response.data;
-  // },
+  // Sanitation Complaints
+  getSanitationComplaints: async (params) => {
+    const response = await api.get('/sanitation-complaints', { params });
+    return response.data;
+  },
+
+  // Environmental Data
+  getEnvironmentalData: async (params) => {
+    const response = await api.get('/environmental-data', { params });
+    return response.data;
+  },
 };
 
 export default api;
