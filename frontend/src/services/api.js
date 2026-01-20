@@ -14,14 +14,21 @@ const api = axios.create({
   },
 });
 
-// Request interceptor (for adding auth tokens later)
+// Request interceptor (for adding auth tokens)
 api.interceptors.request.use(
   (config) => {
-    // Add auth token here when implemented
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    // Add auth token from localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.token) {
+          config.headers.Authorization = `Bearer ${user.token}`;
+        }
+      } catch (e) {
+        console.error('Error parsing user token', e);
+      }
+    }
     return config;
   },
   (error) => {

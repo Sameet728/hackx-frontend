@@ -8,6 +8,8 @@ import sanitationComplaintRoutes from './routes/sanitationComplaints.js';
 import environmentalDataRoutes from './routes/environmentalData.js';
 import areaSummaryRoutes from './routes/areaSummary.js';
 import outbreakRoutes from './routes/outbreak.js';
+import authRoutes from './routes/auth.js';
+import { protect } from './middleware/authMiddleware.js';
 
 // Load environment variables
 dotenv.config();
@@ -27,12 +29,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/health', healthRoutes);
-app.use('/api/health-incidents', healthIncidentRoutes);
-app.use('/api/sanitation-complaints', sanitationComplaintRoutes);
-app.use('/api/environmental-data', environmentalDataRoutes);
-app.use('/api/area-summary', areaSummaryRoutes);
-app.use('/api', outbreakRoutes); // Mounts /api/outbreak-risk
+app.use('/api/auth', authRoutes);
+// Protected Data Routes (Require Login)
+app.use('/api/health', protect, healthRoutes);
+app.use('/api/health-incidents', protect, healthIncidentRoutes);
+app.use('/api/sanitation-complaints', protect, sanitationComplaintRoutes);
+app.use('/api/environmental-data', protect, environmentalDataRoutes);
+app.use('/api/area-summary', protect, areaSummaryRoutes);
+app.use('/api', protect, outbreakRoutes); // Mounts /api/outbreak-risk
 
 // Root endpoint
 app.get('/', (req, res) => {
