@@ -12,42 +12,6 @@ const environmentalDataSchema = new mongoose.Schema(
       enum: ['air', 'water'],
       trim: true
     },
-    // Air quality specific fields
-    aqi: {
-      type: Number,
-      min: 0,
-      max: 500
-    },
-    pm25: {
-      type: Number,
-      min: 0
-    },
-    pm10: {
-      type: Number,
-      min: 0
-    },
-    co2: {
-      type: Number,
-      min: 0
-    },
-    // Water quality specific fields
-    ph: {
-      type: Number,
-      min: 0,
-      max: 14
-    },
-    turbidity: {
-      type: Number,
-      min: 0
-    },
-    dissolvedOxygen: {
-      type: Number,
-      min: 0
-    },
-    contaminants: {
-      type: [String]
-    },
-    // Common fields
     area: {
       type: String,
       required: [true, 'Area is required'],
@@ -67,19 +31,34 @@ const environmentalDataSchema = new mongoose.Schema(
         max: 180
       }
     },
-    date: {
+    // Air quality specific fields (optional, only for air type)
+    pm25: {
+      type: Number,
+      min: 0,
+      required: function() {
+        return this.type === 'air';
+      }
+    },
+    pm10: {
+      type: Number,
+      min: 0,
+      required: function() {
+        return this.type === 'air';
+      }
+    },
+    // Water quality specific field (optional, only for water type)
+    waterQualityIndex: {
+      type: Number,
+      min: 0,
+      max: 100,
+      required: function() {
+        return this.type === 'water';
+      }
+    },
+    recordedDate: {
       type: Date,
-      required: [true, 'Date is required'],
+      required: [true, 'Recorded date is required'],
       default: Date.now
-    },
-    qualityLevel: {
-      type: String,
-      enum: ['good', 'moderate', 'poor', 'hazardous'],
-      default: 'moderate'
-    },
-    source: {
-      type: String,
-      trim: true
     }
   },
   {
@@ -88,7 +67,7 @@ const environmentalDataSchema = new mongoose.Schema(
 );
 
 // Indexes for efficient queries
-environmentalDataSchema.index({ type: 1, date: -1 });
+environmentalDataSchema.index({ type: 1, recordedDate: -1 });
 environmentalDataSchema.index({ 'location.lat': 1, 'location.lng': 1 });
 environmentalDataSchema.index({ area: 1 });
 

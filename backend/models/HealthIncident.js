@@ -6,10 +6,10 @@ import mongoose from 'mongoose';
  */
 const healthIncidentSchema = new mongoose.Schema(
   {
-    type: {
+    diseaseType: {
       type: String,
-      required: [true, 'Incident type is required'],
-      enum: ['disease_outbreak', 'epidemic', 'food_poisoning', 'other'],
+      required: [true, 'Disease type is required'],
+      enum: ['Dengue', 'Malaria', 'Covid', 'Cholera', 'Other'],
       trim: true
     },
     area: {
@@ -31,24 +31,16 @@ const healthIncidentSchema = new mongoose.Schema(
         max: 180
       }
     },
-    date: {
-      type: Date,
-      required: [true, 'Date is required'],
-      default: Date.now
-    },
     severity: {
       type: String,
       required: [true, 'Severity is required'],
-      enum: ['low', 'medium', 'high', 'critical'],
+      enum: ['low', 'medium', 'high'],
       default: 'medium'
     },
-    description: {
-      type: String,
-      maxlength: 500
-    },
-    affectedCount: {
-      type: Number,
-      min: 0
+    reportedDate: {
+      type: Date,
+      required: [true, 'Reported date is required'],
+      default: Date.now
     }
   },
   {
@@ -56,9 +48,10 @@ const healthIncidentSchema = new mongoose.Schema(
   }
 );
 
-// Index for geospatial queries (for future map-based filtering)
+// Index for geospatial queries (for map-based filtering)
 healthIncidentSchema.index({ 'location.lat': 1, 'location.lng': 1 });
-healthIncidentSchema.index({ date: -1 }); // For recent incidents
+healthIncidentSchema.index({ reportedDate: -1 }); // For recent incidents
+healthIncidentSchema.index({ area: 1 }); // For area-based queries
 
 const HealthIncident = mongoose.model('HealthIncident', healthIncidentSchema);
 

@@ -9,14 +9,7 @@ const sanitationComplaintSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, 'Category is required'],
-      enum: [
-        'waste_management',
-        'drainage',
-        'public_toilet',
-        'water_supply',
-        'street_cleaning',
-        'other'
-      ],
+      enum: ['Garbage Overflow', 'Drainage', 'Water Logging', 'Public Toilet'],
       trim: true
     },
     area: {
@@ -41,26 +34,13 @@ const sanitationComplaintSchema = new mongoose.Schema(
     status: {
       type: String,
       required: [true, 'Status is required'],
-      enum: ['pending', 'in_progress', 'resolved', 'rejected'],
-      default: 'pending'
+      enum: ['open', 'in-progress', 'resolved'],
+      default: 'open'
     },
-    date: {
+    reportedDate: {
       type: Date,
-      required: [true, 'Date is required'],
+      required: [true, 'Reported date is required'],
       default: Date.now
-    },
-    description: {
-      type: String,
-      maxlength: 1000
-    },
-    priority: {
-      type: String,
-      enum: ['low', 'medium', 'high'],
-      default: 'medium'
-    },
-    reportedBy: {
-      type: String,
-      trim: true
     }
   },
   {
@@ -70,7 +50,7 @@ const sanitationComplaintSchema = new mongoose.Schema(
 
 // Indexes for efficient queries
 sanitationComplaintSchema.index({ 'location.lat': 1, 'location.lng': 1 });
-sanitationComplaintSchema.index({ status: 1, date: -1 });
+sanitationComplaintSchema.index({ status: 1, reportedDate: -1 });
 sanitationComplaintSchema.index({ area: 1 });
 
 const SanitationComplaint = mongoose.model('SanitationComplaint', sanitationComplaintSchema);
