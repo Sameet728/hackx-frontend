@@ -3,6 +3,10 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
 import healthRoutes from './routes/health.js';
+import healthIncidentRoutes from './routes/healthIncidents.js';
+import sanitationComplaintRoutes from './routes/sanitationComplaints.js';
+import environmentalDataRoutes from './routes/environmentalData.js';
+import areaSummaryRoutes from './routes/areaSummary.js';
 
 // Load environment variables
 dotenv.config();
@@ -23,6 +27,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/health', healthRoutes);
+app.use('/api/health-incidents', healthIncidentRoutes);
+app.use('/api/sanitation-complaints', sanitationComplaintRoutes);
+app.use('/api/environmental-data', environmentalDataRoutes);
+app.use('/api/area-summary', areaSummaryRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -30,7 +38,11 @@ app.get('/', (req, res) => {
     message: 'HackX - Public Health & Urban Risk Dashboard API',
     version: '1.0.0',
     endpoints: {
-      health: '/api/health'
+      health: '/api/health',
+      healthIncidents: '/api/health-incidents',
+      sanitationComplaints: '/api/sanitation-complaints',
+      environmentalData: '/api/environmental-data',
+      areaSummary: '/api/area-summary'
     }
   });
 });
