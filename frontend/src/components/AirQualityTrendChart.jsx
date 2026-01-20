@@ -6,24 +6,29 @@ import { apiService } from '../services/api';
  * AirQualityTrendChart Component
  * Shows PM2.5 levels by area
  */
-function AirQualityTrendChart() {
+function AirQualityTrendChart({ selectedArea }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchEnvironmentalData();
-  }, []);
+  }, [selectedArea]);
 
   const fetchEnvironmentalData = async () => {
     try {
       setLoading(true);
       const response = await apiService.getEnvironmentalData();
       
+      let data = response.data;
+      if (selectedArea && selectedArea !== 'All') {
+        data = data.filter(d => d.area === selectedArea);
+      }
+      
       // Group by area and calculate averages
       const areaMap = {};
       
-      response.data
+      data
         .filter(item => item.type === 'air')
         .forEach(item => {
           if (!areaMap[item.area]) {

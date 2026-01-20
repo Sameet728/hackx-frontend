@@ -6,23 +6,28 @@ import { apiService } from '../services/api';
  * SanitationTrendChart Component
  * Shows sanitation complaints by area
  */
-function SanitationTrendChart() {
+function SanitationTrendChart({ selectedArea }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchSanitationData();
-  }, []);
+  }, [selectedArea]);
 
   const fetchSanitationData = async () => {
     try {
       setLoading(true);
       const response = await apiService.getSanitationComplaints();
       
+      let complaints = response.data;
+      if (selectedArea && selectedArea !== 'All') {
+        complaints = complaints.filter(c => c.area === selectedArea);
+      }
+      
       // Group complaints by area
       const dataByArea = {};
-      response.data.forEach(complaint => {
+      complaints.forEach(complaint => {
         const area = complaint.area || 'Unknown';
         
         if (!dataByArea[area]) {

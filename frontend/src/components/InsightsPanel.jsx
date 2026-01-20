@@ -5,14 +5,14 @@ import { apiService } from '../services/api';
  * InsightsPanel Component
  * Displays rule-based alerts and insights from area summary data
  */
-function InsightsPanel() {
+function InsightsPanel({ selectedArea }) {
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     generateInsights();
-  }, []);
+  }, [selectedArea]);
 
   const generateInsights = async () => {
     try {
@@ -25,46 +25,58 @@ function InsightsPanel() {
         apiService.getSanitationComplaints()
       ]);
 
-      const areaSummary = areaSummaryResponse.data;
-      const envData = envDataResponse.data;
-      const sanitationData = sanitationResponse.data;
+      let areaSummary = areaSummaryResponse.data;
+      let envData = envDataResponse.data;
+      let sanitationData = sanitationResponse.data;
+      
+      if (selectedArea && selectedArea !== 'All') {
+        areaSummary = areaSummary.filter(a => a.area === selectedArea);
+        envData = envData.filter(d => d.area === selectedArea);
+        sanitationData = sanitationData.filter(d => d.area === selectedArea);
+      }
 
       const generatedInsights = [];
 
       // ML Insight: AI Outbreak Predictions
       // Fetch predictions for unique areas (limit to 5 to manage load)
-      const uniqueAreas = [...new Set(areaSummary.map(a => a.area))].slice(0, 5);
+      let uniqueAreas = [...new Set(areaSummary.map(a => a.area))];
+      if (!selectedArea || selectedArea === 'All') {
+         uniqueAreas = uniqueAreas.slice(0, 5);
+      }
       
       // Create a specific Insight for ML predictions
       try {
-        const mlPromises = uniqueAreas.map(area => apiService.getOutbreakRisk(area));
-        const mlResults = await Promise.allSettled(mlPromises);
-        
-        mlResults.forEach((result) => {
-          if (result.status === 'fulfilled') {
-            const pred = result.value;
-            const probPercent = (pred.outbreakProbability * 100).toFixed(1);
-            const drivers = pred.topDrivers && pred.topDrivers.length > 0 
-              ? pred.topDrivers.join(', ') 
-              : 'Multiple factors';
+        if (uniqueAreas.length > 0) {
+          const mlPromises = uniqueAreas.map(area => apiService.getOutbreakRisk(area));
+          const mlResults = await Promise.allSettled(mlPromises);
+          
+          mlResults.forEach((result) => {
+            if (result.status === 'fulfilled' && result.value.success) {
+              const pred = result.value.data;
+              const probPercent = (pred.outbreakProbability).toFixed(1);
+              const drivers = pred.topDrivers && pred.topDrivers.length > 0 
+                ? pred.topDrivers.join(', ') 
+                : 'Multiple factors';
 
-            if (pred.riskLevel === 'HIGH') {
-              generatedInsights.push({
-                type: 'critical',
-                title: `🤖 AI ALERT: High Outbreak Risk in ${pred.area}`,
-                description: `Model Confidence: ${probPercent}%. Key Drivers: ${drivers}`,
-                action: 'Deploy preventive health inputs immediately'
-              });
-            } else if (pred.riskLevel === 'MODERATE') {
-              generatedInsights.push({
-                type: 'warning',
-                title: `🤖 AI ALERT: Moderate Risk in ${pred.area}`,
-                description: `Model Confidence: ${probPercent}%. Key Drivers: ${drivers}`,
-                action: 'Increase vector control measures'
-              });
+              if (pred.riskLevel === 'HIGH' || pred.riskLevel === 'MODERATE') {
+                generatedInsights.push({
+                  type: pred.riskLevel === 'HIGH' ? 'critical' : 'warning',
+                  title: `🤖 AI PREDICTION: ${pred.riskLevel === 'HIGH' ? 'High' : 'Moderate'} Risk of Outbreak in ${pred.area}`,
+                  description: `There is a ${probPercent}% probability of a disease outbreak in the next 7 days based on current data. Contributing factors: ${drivers}.`,
+                  action: pred.riskLevel === 'HIGH' ? 'Deploy preventive health resources immediately' : 'Increase monitoring and vector control'
+                });
+              } else if (selectedArea && selectedArea !== 'All') {
+                  // If specific area selected, show even if Low risk
+                  generatedInsights.push({
+                      type: 'success',
+                      title: `🤖 AI PREDICTION: ${pred.area} is currently Stable`,
+                      description: `There is only a ${probPercent}% probability of an outbreak in the next 7 days. No immediate threats detected.`,
+                      action: 'Continue routine surveillance'
+                  });
+              }
             }
-          }
-        });
+          });
+        }
       } catch (mlErr) {
         console.error('ML Prediction Error:', mlErr);
         // Continue without ML insights if this fails
