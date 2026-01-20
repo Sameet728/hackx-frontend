@@ -18,17 +18,14 @@ const environmentalDataSchema = new mongoose.Schema(
       trim: true
     },
     location: {
-      lat: {
-        type: Number,
-        required: [true, 'Latitude is required'],
-        min: -90,
-        max: 90
+      type: {
+        type: String,
+        enum: ['Point'],
+        required: true
       },
-      lng: {
-        type: Number,
-        required: [true, 'Longitude is required'],
-        min: -180,
-        max: 180
+      coordinates: {
+        type: [Number],
+        required: true
       }
     },
     // Air quality specific fields (optional, only for air type)
@@ -50,7 +47,7 @@ const environmentalDataSchema = new mongoose.Schema(
     waterQualityIndex: {
       type: Number,
       min: 0,
-      max: 100,
+      max: 500,
       required: function() {
         return this.type === 'water';
       }

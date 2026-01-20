@@ -53,7 +53,10 @@ export const getAreaSummary = async (req, res) => {
           healthIncidentCount: 0,
           sanitationComplaintCount: 0,
           pm25Values: [],
-          location: incident.location // Store location from first occurrence
+          location: {
+            lat: incident.location.coordinates[1], // GeoJSON: [lng, lat]
+            lng: incident.location.coordinates[0]
+          }
         });
       }
       areaMap.get(incident.area).healthIncidentCount++;
@@ -67,7 +70,10 @@ export const getAreaSummary = async (req, res) => {
           healthIncidentCount: 0,
           sanitationComplaintCount: 0,
           pm25Values: [],
-          location: complaint.location // Store location from first occurrence
+          location: {
+            lat: complaint.location.coordinates[1],
+            lng: complaint.location.coordinates[0]
+          }
         });
       }
       areaMap.get(complaint.area).sanitationComplaintCount++;
@@ -81,7 +87,10 @@ export const getAreaSummary = async (req, res) => {
           healthIncidentCount: 0,
           sanitationComplaintCount: 0,
           pm25Values: [],
-          location: data.location // Store location from first occurrence
+          location: {
+            lat: data.location.coordinates[1],
+            lng: data.location.coordinates[0]
+          }
         });
       }
       if (data.pm25 !== undefined && data.pm25 !== null) {

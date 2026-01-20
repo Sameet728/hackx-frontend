@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
+import StatCard from '../components/StatCard';
+import SanitationTrendChart from '../components/SanitationTrendChart';
+import AirQualityTrendChart from '../components/AirQualityTrendChart';
+import InsightsPanel from '../components/InsightsPanel';
 
 /**
  * Dashboard Page
@@ -7,12 +11,19 @@ import { apiService } from '../services/api';
  */
 function Dashboard() {
   const [serverStatus, setServerStatus] = useState(null);
+  const [kpiData, setKpiData] = useState({
+    totalHealthIncidents: 0,
+    activeSanitationComplaints: 0,
+    highRiskAreas: 0,
+    avgCityPM25: null
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Fetch server health status on component mount
   useEffect(() => {
     fetchServerStatus();
+    fetchKPIData();
   }, []);
 
   const fetchServerStatus = async () => {
@@ -26,6 +37,42 @@ function Dashboard() {
       console.error('Error fetching server status:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchKPIData = async () => {
+    try {
+      // Fetch all data in parallel
+      const [healthResponse, sanitationResponse, areaSummaryResponse, envDataResponse] = await Promise.all([
+        apiService.getHealthIncidents(),
+        apiService.getSanitationComplaints(),
+        apiService.getAreaSummary(),
+        apiService.getEnvironmentalData()
+      ]);
+
+      // Calculate KPIs
+      const totalHealthIncidents = healthResponse.count;
+      const activeSanitationComplaints = sanitationResponse.data.filter(
+        c => c.status === 'open' || c.status === 'in-progress'
+      ).length;
+      const highRiskAreas = areaSummaryResponse.data.filter(
+        area => area.riskLevel === 'HIGH'
+      ).length;
+
+      // Calculate average city PM2.5
+      const airData = envDataResponse.data.filter(d => d.type === 'air' && d.pm25);
+      const avgCityPM25 = airData.length > 0
+        ? parseFloat((airData.reduce((sum, d) => sum + d.pm25, 0) / airData.length).toFixed(1))
+        : null;
+
+      setKpiData({
+        totalHealthIncidents,
+        activeSanitationComplaints,
+        highRiskAreas,
+        avgCityPM25
+      });
+    } catch (err) {
+      console.error('Error fetching KPI data:', err);
     }
   };
 
@@ -115,10 +162,49 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          title="Total Health Incidents"
+          value={kpiData.totalHealthIncidents}
+          subtitle="Reported cases"
+          color="red"
+        />
+        <StatCard
+          title="Active Complaints"
+          value={kpiData.activeSanitationComplaints}
+          subtitle="Sanitation issues pending"
+          color="orange"
+        />
+        <StatCard
+          title="High-Risk Areas"
+          value={kpiData.highRiskAreas}
+          subtitle="Require immediate attention"
+          color="purple"
+        />
+        <StatCard
+          title="Avg City PM2.5"
+          value={kpiData.avgCityPM25 !== null ? `${kpiData.avgCityPM25} µg/m³` : 'N/A'}
+          subtitle={kpiData.avgCityPM25 > 100 ? 'Unhealthy levels' : 'Acceptable levels'}
+          color={kpiData.avgCityPM25 > 100 ? 'red' : 'green'}
+        />
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <SanitationTrendChart />
+        <AirQualityTrendChart />
+      </div>
+
+      {/* Insights Panel */}
+      <div className="mb-8">
+        <InsightsPanel />
+      </div>
+
       {/* Info Section */}
       <div className="card bg-blue-50 border border-blue-200">
         <h2 className="text-xl font-semibold text-gray-900 mb-3">
-          📋 Phase 1-4 Complete
+          Phase 1-5 Complete
         </h2>
         <ul className="space-y-2 text-gray-700">
           <li className="flex items-start">
@@ -140,6 +226,10 @@ function Dashboard() {
           <li className="flex items-start">
             <span className="text-green-600 mr-2">✓</span>
             Interactive Leaflet map with risk visualization
+          </li>
+          <li className="flex items-start">
+            <span className="text-green-600 mr-2">✓</span>
+            KPI cards, trend charts, and intelligent insights
           </li>
         </ul>
         <div className="mt-4 pt-4 border-t border-blue-300">

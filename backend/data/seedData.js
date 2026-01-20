@@ -1,5 +1,8 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import csvtojson from 'csvtojson';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import HealthIncident from '../models/HealthIncident.js';
 import SanitationComplaint from '../models/SanitationComplaint.js';
 import EnvironmentalData from '../models/EnvironmentalData.js';
@@ -7,134 +10,107 @@ import EnvironmentalData from '../models/EnvironmentalData.js';
 // Load environment variables
 dotenv.config();
 
+// Get current directory path (ES module equivalent of __dirname)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 /**
  * Seed Data Script
- * Populates the database with sample data for Pune city
+ * Reads CSV files and populates MongoDB with geospatial data
  * Usage: node data/seedData.js
  */
 
-// Sample Health Incidents for Pune
-const healthIncidents = [
-  {
-    diseaseType: 'Dengue',
-    area: 'Kothrud',
-    location: { lat: 18.5074, lng: 73.8077 },
-    severity: 'high',
-    reportedDate: new Date('2026-01-15')
-  },
-  {
-    diseaseType: 'Malaria',
-    area: 'Hadapsar',
-    location: { lat: 18.5089, lng: 73.9260 },
-    severity: 'medium',
-    reportedDate: new Date('2026-01-12')
-  },
-  {
-    diseaseType: 'Covid',
-    area: 'Shivajinagar',
-    location: { lat: 18.5304, lng: 73.8442 },
-    severity: 'low',
-    reportedDate: new Date('2026-01-18')
-  },
-  {
-    diseaseType: 'Cholera',
-    area: 'Pimpri',
-    location: { lat: 18.6298, lng: 73.7997 },
-    severity: 'high',
-    reportedDate: new Date('2026-01-10')
-  },
-  {
-    diseaseType: 'Other',
-    area: 'Wakad',
-    location: { lat: 18.5979, lng: 73.7696 },
-    severity: 'medium',
-    reportedDate: new Date('2026-01-14')
-  }
-];
-
-// Sample Sanitation Complaints for Pune
-const sanitationComplaints = [
-  {
-    category: 'Garbage Overflow',
-    area: 'Koregaon Park',
-    location: { lat: 18.5362, lng: 73.8958 },
-    status: 'open',
-    reportedDate: new Date('2026-01-19')
-  },
-  {
-    category: 'Drainage',
-    area: 'Deccan Gymkhana',
-    location: { lat: 18.5204, lng: 73.8567 },
-    status: 'in-progress',
-    reportedDate: new Date('2026-01-16')
-  },
-  {
-    category: 'Water Logging',
-    area: 'Baner',
-    location: { lat: 18.5598, lng: 73.7812 },
-    status: 'resolved',
-    reportedDate: new Date('2026-01-08')
-  },
-  {
-    category: 'Public Toilet',
-    area: 'Swargate',
-    location: { lat: 18.4994, lng: 73.8553 },
-    status: 'open',
-    reportedDate: new Date('2026-01-17')
-  },
-  {
-    category: 'Garbage Overflow',
-    area: 'Viman Nagar',
-    location: { lat: 18.5679, lng: 73.9143 },
-    status: 'in-progress',
-    reportedDate: new Date('2026-01-13')
-  }
-];
-
-// Sample Environmental Data for Pune
-const environmentalData = [
-  {
-    type: 'air',
-    area: 'Pune Station',
-    location: { lat: 18.5314, lng: 73.8740 },
-    pm25: 85.5,
-    pm10: 120.3,
-    recordedDate: new Date('2026-01-20')
-  },
-  {
-    type: 'air',
-    area: 'Katraj',
-    location: { lat: 18.4488, lng: 73.8672 },
-    pm25: 95.2,
-    pm10: 135.7,
-    recordedDate: new Date('2026-01-20')
-  },
-  {
-    type: 'water',
-    area: 'Mula River',
-    location: { lat: 18.5229, lng: 73.8672 },
-    waterQualityIndex: 62,
-    recordedDate: new Date('2026-01-19')
-  },
-  {
-    type: 'air',
-    area: 'Aundh',
-    location: { lat: 18.5590, lng: 73.8078 },
-    pm25: 72.8,
-    pm10: 110.5,
-    recordedDate: new Date('2026-01-20')
-  },
-  {
-    type: 'water',
-    area: 'Mutha River',
-    location: { lat: 18.5196, lng: 73.8553 },
-    waterQualityIndex: 55,
-    recordedDate: new Date('2026-01-18')
-  }
-];
+/**
+ * Transform CSV row to HealthIncident document with GeoJSON
+ */
+const transformHealthIncident = (row) => {
+  return {
+    diseaseType: row.diseaseType,
+    area: row.area,
+    location: {
+      type: 'Point',
+      coordinates: [parseFloat(row.lng), parseFloat(row.lat)] // [longitude, latitude]
+    },
+    severity: row.severity,
+    reportedDate: new Date(row.reportedDate)
+  };
+};
 
 /**
- * Connect to MongoDB and seed data
+ * Transform CSV row to SanitationComplaint document with GeoJSON
+ */
+const transformSanitationComplaint = (row) => {
+  return {
+    category: row.category,
+    area: row.area,
+    location: {
+      type: 'Point',
+      coordinates: [parseFloat(row.lng), parseFloat(row.lat)]
+    },
+    status: row.status,
+    reportedDate: new Date(row.reportedDate)
+  };
+};
+
+/**
+ * Transform CSV row to EnvironmentalData document with GeoJSON
+ */
+const transformEnvironmentalData = (row) => {
+  const doc = {
+    type: row.type,
+    area: row.area,
+    location: {
+      type: 'Point',
+      coordinates: [parseFloat(row.lng), parseFloat(row.lat)]
+    },
+    recordedDate: new Date(row.recordedDate)
+  };
+
+  // Add type-specific fields
+  if (row.type === 'air') {
+    doc.pm25 = parseFloat(row.pm25);
+    doc.pm10 = parseFloat(row.pm10);
+  } else if (row.type === 'water') {
+    doc.waterQualityIndex = parseFloat(row.waterQualityIndex);
+  }
+
+  return doc;
+};
+
+/**
+ * Read CSV file and transform to array of documents
+ */
+const readCSV = async (filename, transformFunc) => {
+  const filePath = join(__dirname, filename);
+  console.log(`📄 Reading ${filename}...`);
+  
+  const jsonArray = await csvtojson().fromFile(filePath);
+  const transformed = jsonArray.map(transformFunc);
+  
+  console.log(`✓ Loaded ${transformed.length} records from ${filename}`);
+  return transformed;
+};
+
+/**
+ * Create 2dsphere index for geospatial queries
+ */
+const createGeospatialIndexes = async () => {
+  console.log('\n🗺️  Creating 2dsphere indexes...');
+  
+  await HealthIncident.collection.createIndex({ location: '2dsphere' });
+  console.log('✓ Created 2dsphere index on HealthIncident.location');
+  
+  await SanitationComplaint.collection.createIndex({ location: '2dsphere' });
+  console.log('✓ Created 2dsphere index on SanitationComplaint.location');
+  
+  await EnvironmentalData.collection.createIndex({ location: '2dsphere' });
+  console.log('✓ Created 2dsphere index on EnvironmentalData.location');
+};
+
+// Placeholder for data arrays (will be loaded from CSV)
+
+/**
+ * Main seed function
  */
 const seedDatabase = async () => {
   try {
@@ -143,37 +119,52 @@ const seedDatabase = async () => {
     console.log('✅ MongoDB Connected');
 
     // Clear existing data
-    console.log('\n🗑️  Clearing existing data...');
+    console.log('\n�️  Clearing existing data...');
     await HealthIncident.deleteMany({});
     await SanitationComplaint.deleteMany({});
     await EnvironmentalData.deleteMany({});
     console.log('✓ Existing data cleared');
 
-    // Insert Health Incidents
-    console.log('\n📊 Inserting Health Incidents...');
+    // Read CSV files
+    console.log('\n📊 Reading CSV files...');
+    const [healthIncidents, sanitationComplaints, environmentalData] = await Promise.all([
+      readCSV('health_incidents_pune_300_rows.csv', transformHealthIncident),
+      readCSV('sanitation_complaints_pune_300_rows.csv', transformSanitationComplaint),
+      readCSV('environmental_data_pune_300_rows.csv', transformEnvironmentalData)
+    ]);
+
+    // Insert data
+    console.log('\n💾 Inserting data into MongoDB...');
+    
     const insertedHealthIncidents = await HealthIncident.insertMany(healthIncidents);
     console.log(`✓ Inserted ${insertedHealthIncidents.length} health incidents`);
 
-    // Insert Sanitation Complaints
-    console.log('\n🚰 Inserting Sanitation Complaints...');
     const insertedComplaints = await SanitationComplaint.insertMany(sanitationComplaints);
     console.log(`✓ Inserted ${insertedComplaints.length} sanitation complaints`);
 
-    // Insert Environmental Data
-    console.log('\n🌍 Inserting Environmental Data...');
     const insertedEnvData = await EnvironmentalData.insertMany(environmentalData);
-    console.log(`✓ Inserted ${insertedEnvData.length} environmental data entries`);
+    console.log(`✓ Inserted ${insertedEnvData.length} environmental data records`);
+
+    // Create geospatial indexes
+    await createGeospatialIndexes();
 
     // Summary
-    console.log('\n' + '='.repeat(50));
+    const totalRecords = insertedHealthIncidents.length + 
+                        insertedComplaints.length + 
+                        insertedEnvData.length;
+
+    console.log('\n' + '='.repeat(60));
     console.log('✅ DATABASE SEEDING COMPLETED SUCCESSFULLY');
-    console.log('='.repeat(50));
-    console.log(`\nTotal Records Inserted:`);
+    console.log('='.repeat(60));
+    console.log(`\n📈 Summary:`);
     console.log(`  - Health Incidents: ${insertedHealthIncidents.length}`);
     console.log(`  - Sanitation Complaints: ${insertedComplaints.length}`);
     console.log(`  - Environmental Data: ${insertedEnvData.length}`);
-    console.log(`  - TOTAL: ${insertedHealthIncidents.length + insertedComplaints.length + insertedEnvData.length}`);
-    console.log('\n📍 All data is for Pune city with realistic coordinates');
+    console.log(`  - TOTAL RECORDS: ${totalRecords}`);
+    console.log(`\n🗺️  GeoJSON Format: All records stored with location.type = "Point"`);
+    console.log(`📍 Coordinates: [longitude, latitude] format for Leaflet compatibility`);
+    console.log(`📅 Dates: Converted to JavaScript Date objects for time-series analysis`);
+    console.log(`🔍 Indexes: 2dsphere indexes created for efficient geospatial queries\n`);
     
     // Close connection
     await mongoose.connection.close();
@@ -182,6 +173,7 @@ const seedDatabase = async () => {
 
   } catch (error) {
     console.error('\n❌ Error seeding database:', error.message);
+    console.error(error);
     process.exit(1);
   }
 };

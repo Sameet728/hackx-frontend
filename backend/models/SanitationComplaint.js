@@ -18,17 +18,14 @@ const sanitationComplaintSchema = new mongoose.Schema(
       trim: true
     },
     location: {
-      lat: {
-        type: Number,
-        required: [true, 'Latitude is required'],
-        min: -90,
-        max: 90
+      type: {
+        type: String,
+        enum: ['Point'],
+        required: true
       },
-      lng: {
-        type: Number,
-        required: [true, 'Longitude is required'],
-        min: -180,
-        max: 180
+      coordinates: {
+        type: [Number],
+        required: true
       }
     },
     status: {
