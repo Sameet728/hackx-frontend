@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       // Direct axios call because apiService might not be set up for auth endpoints yet
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://hackxindia-hackathon-2026.onrender.com/api';
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       
       const userData = response.data;
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password, role) => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://hackxindia-hackathon-2026.onrender.com/api';
       const response = await axios.post(`${API_URL}/auth/register`, { name, email, password, role });
       
       const userData = response.data;
