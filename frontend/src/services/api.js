@@ -7,7 +7,7 @@ import axios from 'axios';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: 'https://hackxindia-hackathon-2026.onrender.com/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
